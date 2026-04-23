@@ -14,7 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      locations: {
+        Row: {
+          capabilities: Json
+          city: string
+          created_at: string
+          description: string | null
+          id: number
+          lat: number
+          lng: number
+          membership_info: string | null
+          name: string
+          source_url: string | null
+          type: string
+        }
+        Insert: {
+          capabilities?: Json
+          city: string
+          created_at?: string
+          description?: string | null
+          id?: never
+          lat: number
+          lng: number
+          membership_info?: string | null
+          name: string
+          source_url?: string | null
+          type: string
+        }
+        Update: {
+          capabilities?: Json
+          city?: string
+          created_at?: string
+          description?: string | null
+          id?: never
+          lat?: number
+          lng?: number
+          membership_info?: string | null
+          name?: string
+          source_url?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
+      submissions: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          id: string
+          location_name: string
+          notes: string | null
+          source_url: string | null
+          status: string
+          submitter_email: string | null
+          suggested_change: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          location_name: string
+          notes?: string | null
+          source_url?: string | null
+          status?: string
+          submitter_email?: string | null
+          suggested_change: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          location_name?: string
+          notes?: string | null
+          source_url?: string | null
+          status?: string
+          submitter_email?: string | null
+          suggested_change?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
