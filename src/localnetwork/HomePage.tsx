@@ -1,0 +1,233 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import NetworkMap from '@/localnetwork/components/NetworkMap';
+import MakerCard from '@/localnetwork/components/MakerCard';
+import MakerDrawer from '@/localnetwork/components/MakerDrawer';
+import { NETWORK_CITIES, PRINTER_TYPES } from '@/localnetwork/data/constants';
+import type { MakerProfile } from '@/localnetwork/data/types';
+import { useSession } from '@/localnetwork/hooks/useSession';
+import { Toaster } from '@/components/ui/sonner';
+import { ChevronDown, Plus, FileUp, LayoutDashboard, Filter, X } from 'lucide-react';
+
+export default function LocalNetworkHome() {
+  const navigate = useNavigate();
+  const { session } = useSession();
+  const [city, setCity] = useState(NETWORK_CITIES[0]);
+  const [cityMenuOpen, setCityMenuOpen] = useState(false);
+  const [makers, setMakers] = useState<MakerProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set());
+  const [availableNow, setAvailableNow] = useState(false);
+  const [sameDayOnly, setSameDayOnly] = useState(false);
+  const [selected, setSelected] = useState<MakerProfile | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [filterPanelOpen, setFilterPanelOpen] = useState(true);
+  const mapRef = useRef<any>(null);
+
+  useEffect(() => {
+    let cancel = false;
+    setLoading(true);
+    supabase
+      .from('maker_profiles')
+      .select('*')
+      .eq('approved', true)
+      .eq('city', city.name)
+      .then(({ data, error }) => {
+        if (cancel) return;
+        if (error) console.error(error);
+        setMakers((data ?? []).map(normalize));
+        setLoading(false);
+      });
+    return () => { cancel = true; };
+  }, [city.name]);
+
+  const filtered = useMemo(() => {
+    return makers.filter(m => {
+      if (activeTypes.size > 0 && !activeTypes.has(m.printer_type)) return false;
+      if (availableNow && m.availability !== 'available') return false;
+      if (sameDayOnly && !(m.turnaround?.toLowerCase().includes('same-day') || m.turnaround?.toLowerCase().includes('24'))) return false;
+      return true;
+    });
+  }, [makers, activeTypes, availableNow, sameDayOnly]);
+
+  function toggleType(t: string) {
+    setActiveTypes(prev => {
+      const next = new Set(prev);
+      next.has(t) ? next.delete(t) : next.add(t);
+      return next;
+    });
+  }
+
+  function switchCity(c: typeof city) {
+    setCity(c);
+    setCityMenuOpen(false);
+    setSelected(null);
+    setDrawerOpen(false);
+    mapRef.current?.setView(c.center, c.zoom);
+  }
+
+  function selectMaker(m: MakerProfile) {
+    setSelected(m);
+    mapRef.current?.flyTo([m.approx_lat, m.approx_lng], 14, { duration: 0.6 });
+  }
+
+  return (
+    <div className="w-screen h-screen overflow-hidden relative bg-background" onClick={() => setCityMenuOpen(false)}>
+      <NetworkMap
+        makers={filtered}
+        center={city.center}
+        zoom={city.zoom}
+        highlightedId={selected?.id ?? null}
+        onMarkerClick={(m) => { setSelected(m); setDrawerOpen(true); }}
+        onMapClick={() => { setSelected(null); setCityMenuOpen(false); }}
+        onReady={map => { mapRef.current = map; }}
+      />
+
+      {/* Top bar */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1001] text-center" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-2 justify-center">
+          <Link to="/" className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">
+            fabnetwork
+          </Link>
+          <span className="text-muted-foreground/40">/</span>
+          <h1 className="font-black uppercase leading-none tracking-tight text-foreground select-none" style={{ fontSize: '1.05rem' }}>
+            localnetwork
+          </h1>
+        </div>
+        <div className="relative mt-1.5 flex justify-center">
+          <button
+            onClick={() => setCityMenuOpen(o => !o)}
+            className="flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase text-foreground/60 hover:text-foreground transition-colors bg-background/80 backdrop-blur-sm border border-border/60 rounded-full px-2.5 py-1"
+          >
+            {city.name}
+            <ChevronDown size={9} className={`transition-transform ${cityMenuOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {cityMenuOpen && (
+            <div className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 bg-background border border-border rounded-xl shadow-lg py-1 min-w-[170px] z-[1002]">
+              {NETWORK_CITIES.map(c => (
+                <button key={c.id} onClick={() => switchCity(c)}
+                  className={`w-full px-4 py-2 text-xs text-left transition-colors ${
+                    c.id === city.id ? 'font-semibold text-foreground bg-muted' : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+                  }`}>
+                  {c.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Top-right action stack */}
+      <div className="absolute top-4 right-4 z-[1001] flex flex-col gap-1.5" onClick={e => e.stopPropagation()}>
+        <button onClick={() => navigate('/localnetwork/request')}
+          className="bg-foreground text-background text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-full hover:opacity-90 transition-opacity flex items-center gap-1.5">
+          <FileUp size={11} /> request a job
+        </button>
+        {session ? (
+          <button onClick={() => navigate('/localnetwork/dashboard')}
+            className="bg-background/90 backdrop-blur-sm border border-border/60 text-foreground text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-full hover:bg-background transition-colors flex items-center gap-1.5">
+            <LayoutDashboard size={11} /> dashboard
+          </button>
+        ) : (
+          <button onClick={() => navigate('/localnetwork/auth')}
+            className="bg-background/90 backdrop-blur-sm border border-border/60 text-foreground text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-full hover:bg-background transition-colors flex items-center gap-1.5">
+            <Plus size={11} /> join as maker
+          </button>
+        )}
+      </div>
+
+      {/* Left filter + list panel */}
+      {filterPanelOpen ? (
+        <div className="absolute top-20 left-4 bottom-4 z-[1000] w-[300px] flex flex-col bg-background/95 backdrop-blur-sm border border-border/60 rounded-2xl shadow-lg overflow-hidden" onClick={e => e.stopPropagation()}>
+          <div className="px-4 pt-3.5 pb-3 border-b border-border/60">
+            <div className="flex items-center justify-between mb-2.5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">filter</p>
+              <button onClick={() => setFilterPanelOpen(false)} className="text-muted-foreground hover:text-foreground">
+                <X size={13} />
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-1 mb-2">
+              {PRINTER_TYPES.map(t => {
+                const on = activeTypes.has(t);
+                return (
+                  <button key={t} onClick={() => toggleType(t)}
+                    className={`text-[10px] font-mono px-2 py-0.5 rounded-full border transition-all ${
+                      on ? 'bg-foreground text-background border-foreground' : 'bg-muted text-foreground/65 border-transparent hover:border-foreground/20'
+                    }`}>
+                    #{t.toLowerCase().replace(/\s+/g, '')}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <Toggle on={availableNow} onClick={() => setAvailableNow(v => !v)}>available now</Toggle>
+              <Toggle on={sameDayOnly} onClick={() => setSameDayOnly(v => !v)}>same-day capable</Toggle>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+            {loading ? (
+              <p className="text-[11px] text-muted-foreground text-center py-8 lowercase">loading nodes…</p>
+            ) : filtered.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground text-center py-8 lowercase">no makers match your filters</p>
+            ) : (
+              filtered.map(m => (
+                <MakerCard key={m.id} maker={m} selected={selected?.id === m.id} onSelect={() => selectMaker(m)} />
+              ))
+            )}
+          </div>
+
+          <div className="px-4 py-2 border-t border-border/60 text-[9px] font-mono uppercase tracking-widest text-muted-foreground/70 flex items-center justify-between">
+            <span>{filtered.length} node{filtered.length === 1 ? '' : 's'}</span>
+            <span>{city.name.toLowerCase()}</span>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setFilterPanelOpen(true)}
+          className="absolute top-20 left-4 z-[1000] bg-background/90 backdrop-blur-sm border border-border/60 rounded-full px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground hover:bg-background transition-colors flex items-center gap-1.5 shadow-sm">
+          <Filter size={11} /> show makers
+        </button>
+      )}
+
+      <MakerDrawer
+        maker={selected}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onRequest={() => navigate(`/localnetwork/request?maker=${selected?.id ?? ''}`)}
+      />
+
+      <Toaster />
+    </div>
+  );
+}
+
+function Toggle({ on, children, onClick }: { on: boolean; children: React.ReactNode; onClick: () => void }) {
+  return (
+    <button onClick={onClick}
+      className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-all lowercase ${
+        on ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
+           : 'bg-muted text-foreground/65 border-transparent hover:border-foreground/20'
+      }`}>
+      {children}
+    </button>
+  );
+}
+
+function normalize(r: any): MakerProfile {
+  return {
+    id: r.id, user_id: r.user_id, alias: r.alias, city: r.city,
+    approx_lat: Number(r.approx_lat), approx_lng: Number(r.approx_lng),
+    service_radius_km: Number(r.service_radius_km),
+    printer_type: r.printer_type, machine_model: r.machine_model,
+    build_volume: r.build_volume,
+    materials: Array.isArray(r.materials) ? r.materials : [],
+    resolution: r.resolution, max_job_size: r.max_job_size,
+    turnaround: r.turnaround,
+    availability: r.availability,
+    fulfillment: Array.isArray(r.fulfillment) ? r.fulfillment : [],
+    price_guidance: r.price_guidance,
+    portfolio_urls: Array.isArray(r.portfolio_urls) ? r.portfolio_urls : [],
+    bio: r.bio, approved: !!r.approved, verified: !!r.verified,
+  };
+}
