@@ -3,7 +3,7 @@
  * Replaces the original Zite SDK calls with direct Supabase queries.
  */
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabaseExternal';
 
 export interface Location {
   id: string;
