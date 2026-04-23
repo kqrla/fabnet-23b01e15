@@ -136,6 +136,7 @@ export type Database = {
           fulfillment: Json
           id: string
           machine_model: string | null
+          machines: Json
           materials: Json
           max_job_size: string | null
           portfolio_urls: Json
@@ -147,6 +148,7 @@ export type Database = {
           updated_at: string
           user_id: string | null
           verified: boolean
+          zip: string | null
         }
         Insert: {
           alias: string
@@ -161,6 +163,7 @@ export type Database = {
           fulfillment?: Json
           id?: string
           machine_model?: string | null
+          machines?: Json
           materials?: Json
           max_job_size?: string | null
           portfolio_urls?: Json
@@ -172,6 +175,7 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           verified?: boolean
+          zip?: string | null
         }
         Update: {
           alias?: string
@@ -186,6 +190,7 @@ export type Database = {
           fulfillment?: Json
           id?: string
           machine_model?: string | null
+          machines?: Json
           materials?: Json
           max_job_size?: string | null
           portfolio_urls?: Json
@@ -197,6 +202,7 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           verified?: boolean
+          zip?: string | null
         }
         Relationships: []
       }

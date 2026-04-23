@@ -35,23 +35,64 @@ export default function MakerDrawer({ maker, open, onClose, onRequest }: Props) 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           {maker.bio && <p className="text-sm text-foreground/80 leading-relaxed lowercase">{maker.bio}</p>}
 
-          <Section label="machine">
-            <Row k="model" v={maker.machine_model} />
-            <Row k="build volume" v={maker.build_volume} />
-            <Row k="resolution" v={maker.resolution} />
-            <Row k="max job size" v={maker.max_job_size} />
-          </Section>
-
-          {maker.materials?.length > 0 && (
-            <Section label="materials">
-              <div className="flex flex-wrap gap-1.5">
-                {maker.materials.map(m => (
-                  <span key={m} className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-muted text-foreground/70">
-                    {m}
-                  </span>
+          {(maker.machines?.length ?? 0) > 0 ? (
+            <Section label={`machines (${maker.machines.length})`}>
+              <div className="space-y-2.5">
+                {maker.machines.map((m, i) => (
+                  <div key={m.id ?? i} className="rounded-lg border border-border/60 bg-muted/30 p-3 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-foreground lowercase">
+                        {m.printer_type}{m.machine_model ? ` · ${m.machine_model}` : ''}
+                      </p>
+                    </div>
+                    {(m.build_volume || m.resolution || m.max_job_size) && (
+                      <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-[10px] text-muted-foreground lowercase">
+                        {m.build_volume && <span>vol: {m.build_volume}</span>}
+                        {m.resolution && <span>res: {m.resolution}</span>}
+                        {m.max_job_size && <span>max: {m.max_job_size}</span>}
+                      </div>
+                    )}
+                    {m.materials?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 pt-0.5">
+                        {m.materials.map(mat => (
+                          <span key={mat} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-background text-foreground/70 border border-border/40">
+                            {mat}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {m.supplies && (
+                      <p className="text-[11px] text-foreground/75 lowercase leading-snug pt-0.5">
+                        <span className="text-muted-foreground">supplies: </span>{m.supplies}
+                      </p>
+                    )}
+                    {m.notes && (
+                      <p className="text-[11px] text-foreground/65 lowercase italic">{m.notes}</p>
+                    )}
+                  </div>
                 ))}
               </div>
             </Section>
+          ) : (
+            <>
+              <Section label="machine">
+                <Row k="model" v={maker.machine_model} />
+                <Row k="build volume" v={maker.build_volume} />
+                <Row k="resolution" v={maker.resolution} />
+                <Row k="max job size" v={maker.max_job_size} />
+              </Section>
+              {maker.materials?.length > 0 && (
+                <Section label="materials">
+                  <div className="flex flex-wrap gap-1.5">
+                    {maker.materials.map(m => (
+                      <span key={m} className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-muted text-foreground/70">
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                </Section>
+              )}
+            </>
           )}
 
           <Section label="logistics">

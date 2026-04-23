@@ -1,8 +1,21 @@
+export interface MakerMachine {
+  id: string;
+  printer_type: string;
+  machine_model?: string | null;
+  build_volume?: string | null;
+  resolution?: string | null;
+  max_job_size?: string | null;
+  materials: string[];
+  supplies?: string | null;
+  notes?: string | null;
+}
+
 export interface MakerProfile {
   id: string;
   user_id: string | null;
   alias: string;
   city: string;
+  zip?: string | null;
   approx_lat: number;
   approx_lng: number;
   service_radius_km: number;
@@ -20,6 +33,7 @@ export interface MakerProfile {
   bio: string | null;
   approved: boolean;
   verified: boolean;
+  machines: MakerMachine[];
 }
 
 export interface FabRequest {

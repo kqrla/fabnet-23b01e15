@@ -32,7 +32,14 @@ export default function MakerCard({ maker, onSelect, selected, distanceKm }: Pro
             {maker.verified && <Shield size={11} className="text-foreground/60 flex-shrink-0" />}
           </div>
           <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5">
-            {maker.printer_type}{maker.machine_model ? ` · ${maker.machine_model}` : ''}
+            {(() => {
+              const types = Array.from(new Set([
+                maker.printer_type,
+                ...(maker.machines?.map(m => m.printer_type) ?? []),
+              ]));
+              if (types.length > 1) return `${types.length} machines · ${types.slice(0,3).join(' · ')}`;
+              return `${maker.printer_type}${maker.machine_model ? ` · ${maker.machine_model}` : ''}`;
+            })()}
           </p>
         </div>
         <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full whitespace-nowrap ${status.cls}`}>

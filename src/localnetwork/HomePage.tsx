@@ -8,7 +8,7 @@ import { NETWORK_CITIES, PRINTER_TYPES } from '@/localnetwork/data/constants';
 import type { MakerProfile } from '@/localnetwork/data/types';
 import { useSession } from '@/localnetwork/hooks/useSession';
 import { Toaster } from '@/components/ui/sonner';
-import { ChevronDown, Plus, FileUp, LayoutDashboard, Filter, X } from 'lucide-react';
+import { ChevronDown, Plus, FileUp, LayoutDashboard, Filter, X, MapPin, Search } from 'lucide-react';
 
 export default function LocalNetworkHome() {
   const navigate = useNavigate();
@@ -23,6 +23,9 @@ export default function LocalNetworkHome() {
   const [selected, setSelected] = useState<MakerProfile | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filterPanelOpen, setFilterPanelOpen] = useState(true);
+  const [zipInput, setZipInput] = useState('');
+  const [activeZip, setActiveZip] = useState('');
+  const [zipError, setZipError] = useState('');
   const mapRef = useRef<any>(null);
 
   useEffect(() => {
@@ -44,12 +47,18 @@ export default function LocalNetworkHome() {
 
   const filtered = useMemo(() => {
     return makers.filter(m => {
-      if (activeTypes.size > 0 && !activeTypes.has(m.printer_type)) return false;
+      if (activeTypes.size > 0) {
+        const allTypes = new Set<string>([m.printer_type, ...(m.machines?.map(x => x.printer_type) ?? [])]);
+        let any = false;
+        activeTypes.forEach(t => { if (allTypes.has(t)) any = true; });
+        if (!any) return false;
+      }
       if (availableNow && m.availability !== 'available') return false;
       if (sameDayOnly && !(m.turnaround?.toLowerCase().includes('same-day') || m.turnaround?.toLowerCase().includes('24'))) return false;
+      if (activeZip && m.zip !== activeZip) return false;
       return true;
     });
-  }, [makers, activeTypes, availableNow, sameDayOnly]);
+  }, [makers, activeTypes, availableNow, sameDayOnly, activeZip]);
 
   function toggleType(t: string) {
     setActiveTypes(prev => {
@@ -64,7 +73,23 @@ export default function LocalNetworkHome() {
     setCityMenuOpen(false);
     setSelected(null);
     setDrawerOpen(false);
+    setActiveZip(''); setZipInput(''); setZipError('');
     mapRef.current?.setView(c.center, c.zoom);
+  }
+
+  function applyZip() {
+    const z = zipInput.trim();
+    if (!z) { setActiveZip(''); setZipError(''); return; }
+    const coords = city.zips[z];
+    if (!coords) { setZipError(`not a valid zip for ${city.name.toLowerCase()}.`); return; }
+    setZipError('');
+    setActiveZip(z);
+    mapRef.current?.setView(coords, 14);
+  }
+
+  function clearZip() {
+    setActiveZip(''); setZipInput(''); setZipError('');
+    mapRef.current?.setView(city.center, city.zoom);
   }
 
   function selectMaker(m: MakerProfile) {
@@ -86,16 +111,10 @@ export default function LocalNetworkHome() {
 
       {/* Top bar */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1001] text-center" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center gap-2 justify-center">
-          <Link to="/" className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">
-            fabnetwork
-          </Link>
-          <span className="text-muted-foreground/40">/</span>
-          <h1 className="font-black uppercase leading-none tracking-tight text-foreground select-none" style={{ fontSize: '1.05rem' }}>
-            localnetwork
-          </h1>
-        </div>
-        <div className="relative mt-1.5 flex justify-center">
+        <h1 className="font-black uppercase leading-none tracking-tight text-foreground select-none text-center" style={{ fontSize: '1.25rem' }}>
+          localnetwork
+        </h1>
+        <div className="relative mt-2 flex justify-center">
           <button
             onClick={() => setCityMenuOpen(o => !o)}
             className="flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase text-foreground/60 hover:text-foreground transition-colors bg-background/80 backdrop-blur-sm border border-border/60 rounded-full px-2.5 py-1"
@@ -146,6 +165,31 @@ export default function LocalNetworkHome() {
               <button onClick={() => setFilterPanelOpen(false)} className="text-muted-foreground hover:text-foreground">
                 <X size={13} />
               </button>
+            </div>
+            {/* ZIP search */}
+            <div className="mb-2.5">
+              <div className="flex items-center gap-1.5">
+                <div className="relative flex-1">
+                  <MapPin size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    value={zipInput}
+                    onChange={e => { setZipInput(e.target.value); setZipError(''); }}
+                    onKeyDown={e => { if (e.key === 'Enter') applyZip(); }}
+                    placeholder={`zip in ${city.name.toLowerCase()}`}
+                    className="w-full h-7 pl-6 pr-2 text-[11px] rounded-full border border-border/60 bg-muted/40 focus:bg-background focus:border-foreground/30 focus:outline-none transition-colors lowercase"
+                  />
+                </div>
+                <button onClick={applyZip} className="h-7 w-7 rounded-full bg-foreground text-background flex items-center justify-center hover:opacity-90 transition-opacity flex-shrink-0">
+                  <Search size={11} />
+                </button>
+                {activeZip && (
+                  <button onClick={clearZip} className="h-7 w-7 rounded-full bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center flex-shrink-0">
+                    <X size={11} />
+                  </button>
+                )}
+              </div>
+              {zipError && <p className="text-[10px] text-destructive mt-1 lowercase">{zipError}</p>}
+              {activeZip && !zipError && <p className="text-[10px] text-muted-foreground mt-1 lowercase">filtering to zip {activeZip}</p>}
             </div>
             <div className="flex flex-wrap gap-1 mb-2">
               {PRINTER_TYPES.map(t => {
@@ -216,7 +260,7 @@ function Toggle({ on, children, onClick }: { on: boolean; children: React.ReactN
 
 function normalize(r: any): MakerProfile {
   return {
-    id: r.id, user_id: r.user_id, alias: r.alias, city: r.city,
+    id: r.id, user_id: r.user_id, alias: r.alias, city: r.city, zip: r.zip ?? null,
     approx_lat: Number(r.approx_lat), approx_lng: Number(r.approx_lng),
     service_radius_km: Number(r.service_radius_km),
     printer_type: r.printer_type, machine_model: r.machine_model,
@@ -229,5 +273,6 @@ function normalize(r: any): MakerProfile {
     price_guidance: r.price_guidance,
     portfolio_urls: Array.isArray(r.portfolio_urls) ? r.portfolio_urls : [],
     bio: r.bio, approved: !!r.approved, verified: !!r.verified,
+    machines: Array.isArray(r.machines) ? r.machines : [],
   };
 }
