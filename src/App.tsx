@@ -8,6 +8,11 @@ import AdminLogin from "@/admin/LoginPage";
 import AdminDashboard from "@/admin/DashboardPage";
 import ContributorLogin from "@/contributor/LoginPage";
 import ContributorDashboard from "@/contributor/DashboardPage";
+import LocalNetworkHome from "@/localnetwork/HomePage";
+import LocalNetworkAuth from "@/localnetwork/AuthPage";
+import LocalNetworkJoin from "@/localnetwork/JoinPage";
+import LocalNetworkRequest from "@/localnetwork/RequestPage";
+import LocalNetworkDashboard from "@/localnetwork/DashboardPage";
 
 export { toUrlSlug } from "@/components/MapApp";
 
@@ -24,6 +29,11 @@ const App = () => (
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/contributor/login" element={<ContributorLogin />} />
           <Route path="/contributor/dashboard" element={<ContributorDashboard />} />
+          <Route path="/localnetwork" element={<LocalNetworkHome />} />
+          <Route path="/localnetwork/auth" element={<LocalNetworkAuth />} />
+          <Route path="/localnetwork/join" element={<LocalNetworkJoin />} />
+          <Route path="/localnetwork/request" element={<LocalNetworkRequest />} />
+          <Route path="/localnetwork/dashboard" element={<LocalNetworkDashboard />} />
           <Route path="*" element={<MapApp />} />
         </Routes>
       </BrowserRouter>
