@@ -5,30 +5,42 @@ import { useSession } from '@/localnetwork/hooks/useSession';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft, Check, Plus, Trash2, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/sonner';
 import {
   PRINTER_TYPES, COMMON_MATERIALS, FULFILLMENT_OPTIONS, AVAILABILITY,
   NETWORK_CITIES,
 } from '@/localnetwork/data/constants';
+import type { MakerMachine } from '@/localnetwork/data/types';
+
+function newMachine(): MakerMachine {
+  return {
+    id: crypto.randomUUID(),
+    printer_type: 'FDM',
+    machine_model: '',
+    build_volume: '',
+    resolution: '',
+    max_job_size: '',
+    materials: [],
+    supplies: '',
+    notes: '',
+  };
+}
 
 export default function JoinPage() {
   const navigate = useNavigate();
   const { session, loading: sessLoading } = useSession();
   const [submitting, setSubmitting] = useState(false);
   const [existingId, setExistingId] = useState<string | null>(null);
+  const [zipError, setZipError] = useState('');
 
   const [form, setForm] = useState({
     alias: '',
     city: NETWORK_CITIES[0].name,
+    zip: '',
     service_radius_km: 10,
-    printer_type: 'FDM',
-    machine_model: '',
-    build_volume: '',
-    materials: [] as string[],
-    resolution: '',
-    max_job_size: '',
+    machines: [newMachine()] as MakerMachine[],
     turnaround: '',
     availability: 'available' as (typeof AVAILABILITY)[number],
     fulfillment: ['pickup'] as string[],
@@ -42,15 +54,30 @@ export default function JoinPage() {
       .then(({ data }) => {
         if (data) {
           setExistingId(data.id);
+          const existingMachines = Array.isArray(data.machines) && (data.machines as any[]).length > 0
+            ? (data.machines as unknown as MakerMachine[])
+            : [{
+                id: crypto.randomUUID(),
+                printer_type: data.printer_type || 'FDM',
+                machine_model: data.machine_model ?? '',
+                build_volume: data.build_volume ?? '',
+                resolution: data.resolution ?? '',
+                max_job_size: data.max_job_size ?? '',
+                materials: Array.isArray(data.materials) ? (data.materials as string[]) : [],
+                supplies: '',
+                notes: '',
+              }];
           setForm({
-            alias: data.alias, city: data.city, service_radius_km: data.service_radius_km,
-            printer_type: data.printer_type, machine_model: data.machine_model ?? '',
-            build_volume: data.build_volume ?? '',
-            materials: Array.isArray(data.materials) ? (data.materials as string[]) : [],
-            resolution: data.resolution ?? '', max_job_size: data.max_job_size ?? '',
-            turnaround: data.turnaround ?? '', availability: data.availability as any,
+            alias: data.alias,
+            city: data.city,
+            zip: (data as any).zip ?? '',
+            service_radius_km: data.service_radius_km,
+            machines: existingMachines,
+            turnaround: data.turnaround ?? '',
+            availability: data.availability as any,
             fulfillment: Array.isArray(data.fulfillment) ? (data.fulfillment as string[]) : [],
-            price_guidance: data.price_guidance ?? '', bio: data.bio ?? '',
+            price_guidance: data.price_guidance ?? '',
+            bio: data.bio ?? '',
           });
         }
       });
@@ -60,7 +87,7 @@ export default function JoinPage() {
   if (!session) {
     return (
       <Center>
-        <p className="text-sm text-muted-foreground lowercase mb-3">you need an account to list your machine.</p>
+        <p className="text-sm text-muted-foreground lowercase mb-3">you need an account to list your machines.</p>
         <Link to="/localnetwork/auth"><Button>create account</Button></Link>
       </Center>
     );
@@ -70,34 +97,84 @@ export default function JoinPage() {
     setForm(f => ({ ...f, [k]: v }));
   }
 
-  function toggleArray(field: 'materials' | 'fulfillment', val: string) {
+  function toggleArray(field: 'fulfillment', val: string) {
     setForm(f => {
       const arr = f[field];
       return { ...f, [field]: arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val] };
     });
   }
 
+  function updateMachine(idx: number, patch: Partial<MakerMachine>) {
+    setForm(f => ({
+      ...f,
+      machines: f.machines.map((m, i) => i === idx ? { ...m, ...patch } : m),
+    }));
+  }
+
+  function toggleMachineMaterial(idx: number, mat: string) {
+    setForm(f => ({
+      ...f,
+      machines: f.machines.map((m, i) => {
+        if (i !== idx) return m;
+        const has = m.materials.includes(mat);
+        return { ...m, materials: has ? m.materials.filter(x => x !== mat) : [...m.materials, mat] };
+      }),
+    }));
+  }
+
+  function addMachine() {
+    setForm(f => ({ ...f, machines: [...f.machines, newMachine()] }));
+  }
+
+  function removeMachine(idx: number) {
+    setForm(f => ({
+      ...f,
+      machines: f.machines.length === 1 ? f.machines : f.machines.filter((_, i) => i !== idx),
+    }));
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.alias.trim() || !form.printer_type) {
-      toast.error('alias and printer type are required');
-      return;
-    }
-    setSubmitting(true);
+    setZipError('');
+    if (!form.alias.trim()) { toast.error('alias is required'); return; }
+    if (form.machines.length === 0) { toast.error('add at least one machine'); return; }
+    if (form.machines.some(m => !m.printer_type)) { toast.error('every machine needs a type'); return; }
+
     const cityCfg = NETWORK_CITIES.find(c => c.name === form.city)!;
-    const payload = {
+    let lat = cityCfg.center[0];
+    let lng = cityCfg.center[1];
+    const zip = form.zip.trim();
+    if (zip) {
+      const coords = cityCfg.zips[zip];
+      if (!coords) {
+        setZipError(`not a valid zip for ${form.city.toLowerCase()}`);
+        toast.error('invalid zip for selected city');
+        return;
+      }
+      [lat, lng] = coords;
+    }
+
+    setSubmitting(true);
+    const primary = form.machines[0];
+    const allMaterials = Array.from(new Set(form.machines.flatMap(m => m.materials)));
+
+    const payload: any = {
       user_id: session!.user.id,
       alias: form.alias.trim().toLowerCase(),
       city: form.city,
-      approx_lat: cityCfg.center[0],
-      approx_lng: cityCfg.center[1],
+      zip: zip || null,
+      approx_lat: lat,
+      approx_lng: lng,
       service_radius_km: form.service_radius_km,
-      printer_type: form.printer_type,
-      machine_model: form.machine_model || null,
-      build_volume: form.build_volume || null,
-      materials: form.materials,
-      resolution: form.resolution || null,
-      max_job_size: form.max_job_size || null,
+      // primary/denormalized fields (back-compat)
+      printer_type: primary.printer_type,
+      machine_model: primary.machine_model || null,
+      build_volume: primary.build_volume || null,
+      materials: allMaterials,
+      resolution: primary.resolution || null,
+      max_job_size: primary.max_job_size || null,
+      // full machine list
+      machines: form.machines,
       turnaround: form.turnaround || null,
       availability: form.availability,
       fulfillment: form.fulfillment,
@@ -113,6 +190,9 @@ export default function JoinPage() {
     navigate('/localnetwork/dashboard');
   }
 
+  const cityCfg = NETWORK_CITIES.find(c => c.name === form.city)!;
+  const zipOptions = Object.keys(cityCfg.zips).sort();
+
   return (
     <div className="min-h-screen bg-background">
       <Toaster />
@@ -124,9 +204,9 @@ export default function JoinPage() {
       </header>
 
       <div className="max-w-2xl mx-auto px-6 py-8 pb-20">
-        <h1 className="text-2xl font-bold text-foreground lowercase">{existingId ? 'edit your maker profile' : 'list your machine'}</h1>
+        <h1 className="text-2xl font-bold text-foreground lowercase">{existingId ? 'edit your maker profile' : 'list your machines'}</h1>
         <p className="text-sm text-muted-foreground mt-1.5 lowercase leading-relaxed">
-          your profile is private until manually reviewed. exact addresses are never shown — only an approximate city center and service radius.
+          your profile is private until manually reviewed. exact addresses are never shown — only your zip area and service radius.
         </p>
 
         <form onSubmit={submit} className="mt-8 space-y-7">
@@ -140,12 +220,30 @@ export default function JoinPage() {
           </Section>
 
           <Section title="location">
-            <Field label="city">
-              <select value={form.city} onChange={e => update('city', e.target.value)}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
-                {NETWORK_CITIES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-              </select>
-            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="city">
+                <select value={form.city} onChange={e => { update('city', e.target.value); update('zip', ''); setZipError(''); }}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                  {NETWORK_CITIES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                </select>
+              </Field>
+              <Field label="zip code">
+                <div className="relative">
+                  <MapPin size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    list={`zips-${cityCfg.id}`}
+                    value={form.zip}
+                    onChange={e => { update('zip', e.target.value); setZipError(''); }}
+                    placeholder="e.g. 94110"
+                    className="w-full h-10 pl-8 pr-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                  <datalist id={`zips-${cityCfg.id}`}>
+                    {zipOptions.map(z => <option key={z} value={z} />)}
+                  </datalist>
+                </div>
+                {zipError && <p className="text-[10px] text-destructive mt-1 lowercase">{zipError}</p>}
+              </Field>
+            </div>
             <Field label={`service radius — ${form.service_radius_km} km`}>
               <input type="range" min={2} max={40} value={form.service_radius_km}
                 onChange={e => update('service_radius_km', Number(e.target.value))}
@@ -153,36 +251,31 @@ export default function JoinPage() {
             </Field>
           </Section>
 
-          <Section title="machine">
-            <Field label="printer type">
-              <div className="flex flex-wrap gap-1.5">
-                {PRINTER_TYPES.map(t => (
-                  <button type="button" key={t} onClick={() => update('printer_type', t)}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                      form.printer_type === t ? 'bg-foreground text-background border-foreground' : 'bg-muted text-foreground/70 border-transparent hover:border-foreground/30'
-                    }`}>{t}</button>
-                ))}
-              </div>
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="machine model"><Input value={form.machine_model} onChange={e => update('machine_model', e.target.value)} placeholder="bambu x1c" /></Field>
-              <Field label="build volume"><Input value={form.build_volume} onChange={e => update('build_volume', e.target.value)} placeholder="256×256×256mm" /></Field>
-              <Field label="resolution / nozzle"><Input value={form.resolution} onChange={e => update('resolution', e.target.value)} placeholder="0.4mm" /></Field>
-              <Field label="max job size"><Input value={form.max_job_size} onChange={e => update('max_job_size', e.target.value)} placeholder="up to 250mm" /></Field>
+          <Section
+            title={`machines (${form.machines.length})`}
+            action={
+              <button type="button" onClick={addMachine}
+                className="text-[10px] font-bold uppercase tracking-widest text-foreground/70 hover:text-foreground flex items-center gap-1">
+                <Plus size={11} /> add machine
+              </button>
+            }
+          >
+            <p className="text-[11px] text-muted-foreground lowercase -mt-1">
+              list every printer / cutter / cnc you own. include resin printers, vinyl cutters (cricut), laser cutters, cnc routers, etc.
+            </p>
+            <div className="space-y-4">
+              {form.machines.map((m, i) => (
+                <MachineEditor
+                  key={m.id}
+                  index={i}
+                  machine={m}
+                  canRemove={form.machines.length > 1}
+                  onUpdate={patch => updateMachine(i, patch)}
+                  onToggleMaterial={mat => toggleMachineMaterial(i, mat)}
+                  onRemove={() => removeMachine(i)}
+                />
+              ))}
             </div>
-            <Field label="materials">
-              <div className="flex flex-wrap gap-1.5">
-                {COMMON_MATERIALS.map(m => {
-                  const on = form.materials.includes(m);
-                  return (
-                    <button type="button" key={m} onClick={() => toggleArray('materials', m)}
-                      className={`text-[10px] font-mono px-2 py-1 rounded-full border transition-colors ${
-                        on ? 'bg-foreground text-background border-foreground' : 'bg-muted text-foreground/70 border-transparent hover:border-foreground/30'
-                      }`}>{m}</button>
-                  );
-                })}
-              </div>
-            </Field>
           </Section>
 
           <Section title="logistics">
@@ -231,10 +324,98 @@ export default function JoinPage() {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function MachineEditor({
+  index, machine, canRemove, onUpdate, onToggleMaterial, onRemove,
+}: {
+  index: number;
+  machine: MakerMachine;
+  canRemove: boolean;
+  onUpdate: (patch: Partial<MakerMachine>) => void;
+  onToggleMaterial: (mat: string) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-card/40 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          machine #{index + 1}
+        </p>
+        {canRemove && (
+          <button type="button" onClick={onRemove}
+            className="text-[10px] text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1 lowercase">
+            <Trash2 size={11} /> remove
+          </button>
+        )}
+      </div>
+
+      <Field label="type">
+        <div className="flex flex-wrap gap-1.5">
+          {PRINTER_TYPES.map(t => (
+            <button type="button" key={t} onClick={() => onUpdate({ printer_type: t })}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                machine.printer_type === t ? 'bg-foreground text-background border-foreground' : 'bg-muted text-foreground/70 border-transparent hover:border-foreground/30'
+              }`}>{t}</button>
+          ))}
+        </div>
+      </Field>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="model">
+          <Input value={machine.machine_model ?? ''} onChange={e => onUpdate({ machine_model: e.target.value })}
+            placeholder="bambu x1c, cricut maker 3, glowforge…" />
+        </Field>
+        <Field label="build volume / work area">
+          <Input value={machine.build_volume ?? ''} onChange={e => onUpdate({ build_volume: e.target.value })}
+            placeholder="256×256×256mm, 12×24in…" />
+        </Field>
+        <Field label="resolution / nozzle / bit">
+          <Input value={machine.resolution ?? ''} onChange={e => onUpdate({ resolution: e.target.value })}
+            placeholder="0.4mm, 50µm, 1/8in" />
+        </Field>
+        <Field label="max job size">
+          <Input value={machine.max_job_size ?? ''} onChange={e => onUpdate({ max_job_size: e.target.value })}
+            placeholder="up to 250mm" />
+        </Field>
+      </div>
+
+      <Field label="materials / filaments">
+        <div className="flex flex-wrap gap-1.5">
+          {COMMON_MATERIALS.map(m => {
+            const on = machine.materials.includes(m);
+            return (
+              <button type="button" key={m} onClick={() => onToggleMaterial(m)}
+                className={`text-[10px] font-mono px-2 py-1 rounded-full border transition-colors ${
+                  on ? 'bg-foreground text-background border-foreground' : 'bg-muted text-foreground/70 border-transparent hover:border-foreground/30'
+                }`}>{m}</button>
+            );
+          })}
+        </div>
+      </Field>
+
+      <Field label="specific supplies on hand (optional)">
+        <Textarea
+          rows={2}
+          value={machine.supplies ?? ''}
+          onChange={e => onUpdate({ supplies: e.target.value })}
+          placeholder="e.g. 5 spools of black pla, 2kg petg-cf, walnut plywood sheets, htv vinyl rolls (red/black/white), 2mm acrylic"
+        />
+      </Field>
+
+      <Field label="notes (optional)">
+        <Input value={machine.notes ?? ''} onChange={e => onUpdate({ notes: e.target.value })}
+          placeholder="dual extruder, enclosed, food-safe-only, etc." />
+      </Field>
+    </div>
+  );
+}
+
+function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground border-b border-border/60 pb-1.5">{title}</h2>
+      <div className="flex items-center justify-between border-b border-border/60 pb-1.5">
+        <h2 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{title}</h2>
+        {action}
+      </div>
       {children}
     </section>
   );
