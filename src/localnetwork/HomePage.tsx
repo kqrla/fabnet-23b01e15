@@ -8,7 +8,7 @@ import { NETWORK_CITIES, PRINTER_TYPES } from '@/localnetwork/data/constants';
 import type { MakerProfile } from '@/localnetwork/data/types';
 import { useSession } from '@/localnetwork/hooks/useSession';
 import { Toaster } from '@/components/ui/sonner';
-import { ChevronDown, Plus, FileUp, LayoutDashboard, Filter, X } from 'lucide-react';
+import { ChevronDown, Plus, FileUp, LayoutDashboard, Filter, X, MapPin, Search } from 'lucide-react';
 
 export default function LocalNetworkHome() {
   const navigate = useNavigate();
@@ -23,6 +23,9 @@ export default function LocalNetworkHome() {
   const [selected, setSelected] = useState<MakerProfile | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filterPanelOpen, setFilterPanelOpen] = useState(true);
+  const [zipInput, setZipInput] = useState('');
+  const [activeZip, setActiveZip] = useState('');
+  const [zipError, setZipError] = useState('');
   const mapRef = useRef<any>(null);
 
   useEffect(() => {
@@ -45,8 +48,15 @@ export default function LocalNetworkHome() {
   const filtered = useMemo(() => {
     return makers.filter(m => {
       if (activeTypes.size > 0 && !activeTypes.has(m.printer_type)) return false;
+      if (activeTypes.size > 0) {
+        const allTypes = new Set<string>([m.printer_type, ...(m.machines?.map(x => x.printer_type) ?? [])]);
+        let any = false;
+        activeTypes.forEach(t => { if (allTypes.has(t)) any = true; });
+        if (!any) return false;
+      }
       if (availableNow && m.availability !== 'available') return false;
       if (sameDayOnly && !(m.turnaround?.toLowerCase().includes('same-day') || m.turnaround?.toLowerCase().includes('24'))) return false;
+      if (activeZip && m.zip !== activeZip) return false;
       return true;
     });
   }, [makers, activeTypes, availableNow, sameDayOnly]);
