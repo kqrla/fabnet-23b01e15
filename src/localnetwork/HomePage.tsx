@@ -166,6 +166,31 @@ export default function LocalNetworkHome() {
                 <X size={13} />
               </button>
             </div>
+            {/* ZIP search */}
+            <div className="mb-2.5">
+              <div className="flex items-center gap-1.5">
+                <div className="relative flex-1">
+                  <MapPin size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    value={zipInput}
+                    onChange={e => { setZipInput(e.target.value); setZipError(''); }}
+                    onKeyDown={e => { if (e.key === 'Enter') applyZip(); }}
+                    placeholder={`zip in ${city.name.toLowerCase()}`}
+                    className="w-full h-7 pl-6 pr-2 text-[11px] rounded-full border border-border/60 bg-muted/40 focus:bg-background focus:border-foreground/30 focus:outline-none transition-colors lowercase"
+                  />
+                </div>
+                <button onClick={applyZip} className="h-7 w-7 rounded-full bg-foreground text-background flex items-center justify-center hover:opacity-90 transition-opacity flex-shrink-0">
+                  <Search size={11} />
+                </button>
+                {activeZip && (
+                  <button onClick={clearZip} className="h-7 w-7 rounded-full bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center flex-shrink-0">
+                    <X size={11} />
+                  </button>
+                )}
+              </div>
+              {zipError && <p className="text-[10px] text-destructive mt-1 lowercase">{zipError}</p>}
+              {activeZip && !zipError && <p className="text-[10px] text-muted-foreground mt-1 lowercase">filtering to zip {activeZip}</p>}
+            </div>
             <div className="flex flex-wrap gap-1 mb-2">
               {PRINTER_TYPES.map(t => {
                 const on = activeTypes.has(t);
@@ -235,7 +260,7 @@ function Toggle({ on, children, onClick }: { on: boolean; children: React.ReactN
 
 function normalize(r: any): MakerProfile {
   return {
-    id: r.id, user_id: r.user_id, alias: r.alias, city: r.city,
+    id: r.id, user_id: r.user_id, alias: r.alias, city: r.city, zip: r.zip ?? null,
     approx_lat: Number(r.approx_lat), approx_lng: Number(r.approx_lng),
     service_radius_km: Number(r.service_radius_km),
     printer_type: r.printer_type, machine_model: r.machine_model,
@@ -248,5 +273,6 @@ function normalize(r: any): MakerProfile {
     price_guidance: r.price_guidance,
     portfolio_urls: Array.isArray(r.portfolio_urls) ? r.portfolio_urls : [],
     bio: r.bio, approved: !!r.approved, verified: !!r.verified,
+    machines: Array.isArray(r.machines) ? r.machines : [],
   };
 }
