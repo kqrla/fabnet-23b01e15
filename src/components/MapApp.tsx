@@ -4,7 +4,6 @@ import LocationCard from '@/components/LocationCard';
 import LocationDrawer from '@/components/LocationDrawer';
 import SuggestModal from '@/components/SuggestModal';
 import InfoPanel from '@/components/InfoPanel';
-import SeedRunner from '@/components/SeedRunner';
 import { Toaster } from '@/components/ui/sonner';
 import { Menu, Plus, ZoomIn, ZoomOut, Info, MapPin, X, Palette, ChevronDown, Loader2 } from 'lucide-react';
 import { CITIES, type CityConfig } from '@/data/cities';
@@ -309,8 +308,6 @@ export default function MapApp() {
     () => [...filteredLocations, ...universityLocations],
     [filteredLocations, universityLocations]
   );
-
-  if (isSeedMode) return <SeedRunner />;
 
   return (
     <div
