@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      fab_requests: {
+        Row: {
+          budget_range: string | null
+          city: string
+          created_at: string
+          description: string | null
+          file_urls: Json
+          id: string
+          job_type: string
+          matched_maker_id: string | null
+          material: string | null
+          notes: string | null
+          pickup_lat: number | null
+          pickup_lng: number | null
+          quantity: number
+          requester_email: string | null
+          requester_id: string | null
+          status: string
+          title: string
+          urgency: string
+          zip: string | null
+        }
+        Insert: {
+          budget_range?: string | null
+          city: string
+          created_at?: string
+          description?: string | null
+          file_urls?: Json
+          id?: string
+          job_type: string
+          matched_maker_id?: string | null
+          material?: string | null
+          notes?: string | null
+          pickup_lat?: number | null
+          pickup_lng?: number | null
+          quantity?: number
+          requester_email?: string | null
+          requester_id?: string | null
+          status?: string
+          title: string
+          urgency?: string
+          zip?: string | null
+        }
+        Update: {
+          budget_range?: string | null
+          city?: string
+          created_at?: string
+          description?: string | null
+          file_urls?: Json
+          id?: string
+          job_type?: string
+          matched_maker_id?: string | null
+          material?: string | null
+          notes?: string | null
+          pickup_lat?: number | null
+          pickup_lng?: number | null
+          quantity?: number
+          requester_email?: string | null
+          requester_id?: string | null
+          status?: string
+          title?: string
+          urgency?: string
+          zip?: string | null
+        }
+        Relationships: []
+      }
       locations: {
         Row: {
           capabilities: Json
@@ -53,6 +119,84 @@ export type Database = {
           name?: string
           source_url?: string | null
           type?: string
+        }
+        Relationships: []
+      }
+      maker_profiles: {
+        Row: {
+          alias: string
+          approved: boolean
+          approx_lat: number
+          approx_lng: number
+          availability: string
+          bio: string | null
+          build_volume: string | null
+          city: string
+          created_at: string
+          fulfillment: Json
+          id: string
+          machine_model: string | null
+          materials: Json
+          max_job_size: string | null
+          portfolio_urls: Json
+          price_guidance: string | null
+          printer_type: string
+          resolution: string | null
+          service_radius_km: number
+          turnaround: string | null
+          updated_at: string
+          user_id: string | null
+          verified: boolean
+        }
+        Insert: {
+          alias: string
+          approved?: boolean
+          approx_lat: number
+          approx_lng: number
+          availability?: string
+          bio?: string | null
+          build_volume?: string | null
+          city: string
+          created_at?: string
+          fulfillment?: Json
+          id?: string
+          machine_model?: string | null
+          materials?: Json
+          max_job_size?: string | null
+          portfolio_urls?: Json
+          price_guidance?: string | null
+          printer_type: string
+          resolution?: string | null
+          service_radius_km?: number
+          turnaround?: string | null
+          updated_at?: string
+          user_id?: string | null
+          verified?: boolean
+        }
+        Update: {
+          alias?: string
+          approved?: boolean
+          approx_lat?: number
+          approx_lng?: number
+          availability?: string
+          bio?: string | null
+          build_volume?: string | null
+          city?: string
+          created_at?: string
+          fulfillment?: Json
+          id?: string
+          machine_model?: string | null
+          materials?: Json
+          max_job_size?: string | null
+          portfolio_urls?: Json
+          price_guidance?: string | null
+          printer_type?: string
+          resolution?: string | null
+          service_radius_km?: number
+          turnaround?: string | null
+          updated_at?: string
+          user_id?: string | null
+          verified?: boolean
         }
         Relationships: []
       }
