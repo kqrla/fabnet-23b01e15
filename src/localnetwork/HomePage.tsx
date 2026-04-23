@@ -47,7 +47,6 @@ export default function LocalNetworkHome() {
 
   const filtered = useMemo(() => {
     return makers.filter(m => {
-      if (activeTypes.size > 0 && !activeTypes.has(m.printer_type)) return false;
       if (activeTypes.size > 0) {
         const allTypes = new Set<string>([m.printer_type, ...(m.machines?.map(x => x.printer_type) ?? [])]);
         let any = false;
@@ -59,7 +58,7 @@ export default function LocalNetworkHome() {
       if (activeZip && m.zip !== activeZip) return false;
       return true;
     });
-  }, [makers, activeTypes, availableNow, sameDayOnly]);
+  }, [makers, activeTypes, availableNow, sameDayOnly, activeZip]);
 
   function toggleType(t: string) {
     setActiveTypes(prev => {
@@ -74,7 +73,23 @@ export default function LocalNetworkHome() {
     setCityMenuOpen(false);
     setSelected(null);
     setDrawerOpen(false);
+    setActiveZip(''); setZipInput(''); setZipError('');
     mapRef.current?.setView(c.center, c.zoom);
+  }
+
+  function applyZip() {
+    const z = zipInput.trim();
+    if (!z) { setActiveZip(''); setZipError(''); return; }
+    const coords = city.zips[z];
+    if (!coords) { setZipError(`not a valid zip for ${city.name.toLowerCase()}.`); return; }
+    setZipError('');
+    setActiveZip(z);
+    mapRef.current?.setView(coords, 14);
+  }
+
+  function clearZip() {
+    setActiveZip(''); setZipInput(''); setZipError('');
+    mapRef.current?.setView(city.center, city.zoom);
   }
 
   function selectMaker(m: MakerProfile) {
@@ -96,16 +111,10 @@ export default function LocalNetworkHome() {
 
       {/* Top bar */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1001] text-center" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center gap-2 justify-center">
-          <Link to="/" className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">
-            fabnetwork
-          </Link>
-          <span className="text-muted-foreground/40">/</span>
-          <h1 className="font-black uppercase leading-none tracking-tight text-foreground select-none" style={{ fontSize: '1.05rem' }}>
-            localnetwork
-          </h1>
-        </div>
-        <div className="relative mt-1.5 flex justify-center">
+        <h1 className="font-black uppercase leading-none tracking-tight text-foreground select-none text-center" style={{ fontSize: '1.25rem' }}>
+          localnetwork
+        </h1>
+        <div className="relative mt-2 flex justify-center">
           <button
             onClick={() => setCityMenuOpen(o => !o)}
             className="flex items-center gap-1 text-[10px] font-semibold tracking-widest uppercase text-foreground/60 hover:text-foreground transition-colors bg-background/80 backdrop-blur-sm border border-border/60 rounded-full px-2.5 py-1"
