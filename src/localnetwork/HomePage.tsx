@@ -164,6 +164,16 @@ export default function LocalNetworkHome() {
             <Plus size={11} /> join as maker
           </button>
         )}
+        <div className="flex gap-1.5">
+          <button onClick={() => navigate('/localnetwork/dashboard?demo=1')}
+            className="flex-1 bg-background/70 backdrop-blur-sm border border-dashed border-border/60 text-muted-foreground text-[9px] font-bold uppercase tracking-widest px-2 py-1.5 rounded-full hover:text-foreground hover:border-foreground/40 transition-colors">
+            maker demo
+          </button>
+          <button onClick={() => navigate('/localnetwork/requester?demo=1')}
+            className="flex-1 bg-background/70 backdrop-blur-sm border border-dashed border-border/60 text-muted-foreground text-[9px] font-bold uppercase tracking-widest px-2 py-1.5 rounded-full hover:text-foreground hover:border-foreground/40 transition-colors">
+            requester demo
+          </button>
+        </div>
       </div>
 
       {/* Left filter + list panel */}

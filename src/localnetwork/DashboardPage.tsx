@@ -5,7 +5,7 @@ import { useSession } from '@/localnetwork/hooks/useSession';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
-import { ArrowLeft, Pencil, LogOut, Shield, Clock } from 'lucide-react';
+import { ArrowLeft, Pencil, LogOut, Shield, Clock, ExternalLink } from 'lucide-react';
 import type { MakerProfile, FabRequest } from '@/localnetwork/data/types';
 import { AVAILABILITY } from '@/localnetwork/data/constants';
 import { DEMO_MAKER, DEMO_INCOMING, DEMO_OPEN } from '@/localnetwork/data/demo';
@@ -116,6 +116,16 @@ export default function DashboardPage() {
               </Button>
             </Link>
           </div>
+          {profile.approved ? (
+            <a href={`/m/${profile.alias}`} target="_blank" rel="noreferrer"
+              className="inline-flex items-center gap-1 mb-3 text-[10px] font-mono text-muted-foreground hover:text-foreground transition-colors lowercase">
+              public page: /m/@{profile.alias} <ExternalLink size={10} />
+            </a>
+          ) : (
+            <p className="mb-3 text-[10px] text-amber-700 dark:text-amber-400 lowercase">
+              your /m/@{profile.alias} page activates once we approve your profile. you can keep editing in the meantime.
+            </p>
+          )}
           <div className="border-t border-border/60 pt-4">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">availability</p>
             <div className="flex gap-1.5">
