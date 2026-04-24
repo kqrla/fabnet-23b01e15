@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Toaster } from '@/components/ui/sonner';
 import {
   PRINTER_TYPES, COMMON_MATERIALS, FULFILLMENT_OPTIONS, AVAILABILITY,
-  NETWORK_CITIES,
+  NETWORK_CITIES, FAB_CAPABILITIES, MAKER_TRAITS, toHashtag,
 } from '@/localnetwork/data/constants';
 import type { MakerMachine } from '@/localnetwork/data/types';
 
@@ -41,6 +41,8 @@ export default function JoinPage() {
     zip: '',
     service_radius_km: 10,
     machines: [newMachine()] as MakerMachine[],
+    capabilities: [] as string[],
+    traits: [] as string[],
     turnaround: '',
     availability: 'available' as (typeof AVAILABILITY)[number],
     fulfillment: ['pickup'] as string[],
@@ -73,6 +75,8 @@ export default function JoinPage() {
             zip: (data as any).zip ?? '',
             service_radius_km: data.service_radius_km,
             machines: existingMachines,
+            capabilities: Array.isArray((data as any).capabilities) ? ((data as any).capabilities as string[]) : [],
+            traits: Array.isArray((data as any).traits) ? ((data as any).traits as string[]) : [],
             turnaround: data.turnaround ?? '',
             availability: data.availability as any,
             fulfillment: Array.isArray(data.fulfillment) ? (data.fulfillment as string[]) : [],
@@ -97,9 +101,9 @@ export default function JoinPage() {
     setForm(f => ({ ...f, [k]: v }));
   }
 
-  function toggleArray(field: 'fulfillment', val: string) {
+  function toggleArray(field: 'fulfillment' | 'capabilities' | 'traits', val: string) {
     setForm(f => {
-      const arr = f[field];
+      const arr = f[field] as string[];
       return { ...f, [field]: arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val] };
     });
   }
@@ -175,6 +179,8 @@ export default function JoinPage() {
       max_job_size: primary.max_job_size || null,
       // full machine list
       machines: form.machines,
+      capabilities: form.capabilities,
+      traits: form.traits,
       turnaround: form.turnaround || null,
       availability: form.availability,
       fulfillment: form.fulfillment,
@@ -275,6 +281,46 @@ export default function JoinPage() {
                   onRemove={() => removeMachine(i)}
                 />
               ))}
+            </div>
+          </Section>
+
+          <Section title="capabilities">
+            <p className="text-[11px] text-muted-foreground lowercase -mt-1">
+              what kinds of fabrication can you do? these are the same tags used on the main fabnetwork map.
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {FAB_CAPABILITIES.map(c => {
+                const on = form.capabilities.includes(c);
+                return (
+                  <button type="button" key={c} onClick={() => toggleArray('capabilities', c)}
+                    className={`text-[11px] font-mono px-2.5 py-1 rounded-full border transition-colors ${
+                      on ? 'bg-foreground text-background border-foreground' : 'bg-muted text-foreground/70 border-transparent hover:border-foreground/30'
+                    }`}>
+                    {toHashtag(c)}
+                  </button>
+                );
+              })}
+            </div>
+          </Section>
+
+          <Section title="traits">
+            <p className="text-[11px] text-muted-foreground lowercase -mt-1">
+              describe the kind of work you're best at. shown as pills on your profile (not used as filters).
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {MAKER_TRAITS.map(t => {
+                const on = form.traits.includes(t);
+                return (
+                  <button type="button" key={t} onClick={() => toggleArray('traits', t)}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors lowercase ${
+                      on
+                        ? 'bg-accent text-accent-foreground border-accent'
+                        : 'bg-muted text-foreground/70 border-transparent hover:border-foreground/30'
+                    }`}>
+                    {t}
+                  </button>
+                );
+              })}
             </div>
           </Section>
 

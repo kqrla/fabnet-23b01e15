@@ -131,6 +131,7 @@ export type Database = {
           availability: string
           bio: string | null
           build_volume: string | null
+          capabilities: Json
           city: string
           created_at: string
           fulfillment: Json
@@ -144,6 +145,7 @@ export type Database = {
           printer_type: string
           resolution: string | null
           service_radius_km: number
+          traits: Json
           turnaround: string | null
           updated_at: string
           user_id: string | null
@@ -158,6 +160,7 @@ export type Database = {
           availability?: string
           bio?: string | null
           build_volume?: string | null
+          capabilities?: Json
           city: string
           created_at?: string
           fulfillment?: Json
@@ -171,6 +174,7 @@ export type Database = {
           printer_type: string
           resolution?: string | null
           service_radius_km?: number
+          traits?: Json
           turnaround?: string | null
           updated_at?: string
           user_id?: string | null
@@ -185,6 +189,7 @@ export type Database = {
           availability?: string
           bio?: string | null
           build_volume?: string | null
+          capabilities?: Json
           city?: string
           created_at?: string
           fulfillment?: Json
@@ -198,6 +203,7 @@ export type Database = {
           printer_type?: string
           resolution?: string | null
           service_radius_km?: number
+          traits?: Json
           turnaround?: string | null
           updated_at?: string
           user_id?: string | null

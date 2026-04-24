@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import NetworkMap from '@/localnetwork/components/NetworkMap';
 import MakerCard from '@/localnetwork/components/MakerCard';
 import MakerDrawer from '@/localnetwork/components/MakerDrawer';
-import { NETWORK_CITIES, PRINTER_TYPES } from '@/localnetwork/data/constants';
+import MakerCardPopover from '@/localnetwork/components/MakerCardPopover';
+import { NETWORK_CITIES, PRINTER_TYPES, FAB_CAPABILITIES, toHashtag } from '@/localnetwork/data/constants';
 import type { MakerProfile } from '@/localnetwork/data/types';
 import { useSession } from '@/localnetwork/hooks/useSession';
 import { Toaster } from '@/components/ui/sonner';
@@ -18,10 +19,12 @@ export default function LocalNetworkHome() {
   const [makers, setMakers] = useState<MakerProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set());
+  const [activeCaps, setActiveCaps] = useState<Set<string>>(new Set());
   const [availableNow, setAvailableNow] = useState(false);
   const [sameDayOnly, setSameDayOnly] = useState(false);
   const [selected, setSelected] = useState<MakerProfile | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [popover, setPopover] = useState<{ maker: MakerProfile; x: number; y: number } | null>(null);
   const [filterPanelOpen, setFilterPanelOpen] = useState(true);
   const [zipInput, setZipInput] = useState('');
   const [activeZip, setActiveZip] = useState('');
@@ -53,12 +56,18 @@ export default function LocalNetworkHome() {
         activeTypes.forEach(t => { if (allTypes.has(t)) any = true; });
         if (!any) return false;
       }
+      if (activeCaps.size > 0) {
+        const caps = m.capabilities ?? [];
+        let any = false;
+        activeCaps.forEach(c => { if (caps.includes(c)) any = true; });
+        if (!any) return false;
+      }
       if (availableNow && m.availability !== 'available') return false;
       if (sameDayOnly && !(m.turnaround?.toLowerCase().includes('same-day') || m.turnaround?.toLowerCase().includes('24'))) return false;
       if (activeZip && m.zip !== activeZip) return false;
       return true;
     });
-  }, [makers, activeTypes, availableNow, sameDayOnly, activeZip]);
+  }, [makers, activeTypes, activeCaps, availableNow, sameDayOnly, activeZip]);
 
   function toggleType(t: string) {
     setActiveTypes(prev => {
@@ -68,11 +77,20 @@ export default function LocalNetworkHome() {
     });
   }
 
+  function toggleCap(c: string) {
+    setActiveCaps(prev => {
+      const next = new Set(prev);
+      next.has(c) ? next.delete(c) : next.add(c);
+      return next;
+    });
+  }
+
   function switchCity(c: typeof city) {
     setCity(c);
     setCityMenuOpen(false);
     setSelected(null);
     setDrawerOpen(false);
+    setPopover(null);
     setActiveZip(''); setZipInput(''); setZipError('');
     mapRef.current?.setView(c.center, c.zoom);
   }
@@ -94,18 +112,25 @@ export default function LocalNetworkHome() {
 
   function selectMaker(m: MakerProfile) {
     setSelected(m);
+    setPopover(null);
     mapRef.current?.flyTo([m.approx_lat, m.approx_lng], 14, { duration: 0.6 });
+    // After fly, show popover at the screen position of the maker
+    setTimeout(() => {
+      const map = mapRef.current; if (!map) return;
+      const pt = map.latLngToContainerPoint([m.approx_lat, m.approx_lng]);
+      setPopover({ maker: m, x: pt.x, y: pt.y });
+    }, 650);
   }
 
   return (
-    <div className="w-screen h-screen overflow-hidden relative bg-background" onClick={() => setCityMenuOpen(false)}>
+    <div className="w-screen h-screen overflow-hidden relative bg-background" onClick={() => { setCityMenuOpen(false); setPopover(null); }}>
       <NetworkMap
         makers={filtered}
         center={city.center}
         zoom={city.zoom}
         highlightedId={selected?.id ?? null}
-        onMarkerClick={(m) => { setSelected(m); setDrawerOpen(true); }}
-        onMapClick={() => { setSelected(null); setCityMenuOpen(false); }}
+        onMarkerClick={(m, x, y) => { setSelected(m); setDrawerOpen(false); setPopover({ maker: m, x, y }); }}
+        onMapClick={() => { setSelected(null); setCityMenuOpen(false); setPopover(null); }}
         onReady={map => { mapRef.current = map; }}
       />
 
@@ -204,6 +229,19 @@ export default function LocalNetworkHome() {
                 );
               })}
             </div>
+            <div className="flex flex-wrap gap-1 mb-2">
+              {FAB_CAPABILITIES.map(c => {
+                const on = activeCaps.has(c);
+                return (
+                  <button key={c} onClick={() => toggleCap(c)}
+                    className={`text-[10px] font-mono px-2 py-0.5 rounded-full border transition-all ${
+                      on ? 'bg-foreground text-background border-foreground' : 'bg-muted text-foreground/65 border-transparent hover:border-foreground/20'
+                    }`}>
+                    {toHashtag(c)}
+                  </button>
+                );
+              })}
+            </div>
             <div className="flex flex-wrap gap-1.5">
               <Toggle on={availableNow} onClick={() => setAvailableNow(v => !v)}>available now</Toggle>
               <Toggle on={sameDayOnly} onClick={() => setSameDayOnly(v => !v)}>same-day capable</Toggle>
@@ -241,6 +279,18 @@ export default function LocalNetworkHome() {
         onRequest={() => navigate(`/localnetwork/request?maker=${selected?.id ?? ''}`)}
       />
 
+      {popover && (
+        <MakerCardPopover
+          maker={popover.maker}
+          x={popover.x}
+          y={popover.y}
+          onClose={() => setPopover(null)}
+          onTagClick={(c) => toggleCap(c)}
+          onMoreInfo={() => { setSelected(popover.maker); setDrawerOpen(true); setPopover(null); }}
+          selectedCaps={activeCaps}
+        />
+      )}
+
       <Toaster />
     </div>
   );
@@ -274,5 +324,7 @@ function normalize(r: any): MakerProfile {
     portfolio_urls: Array.isArray(r.portfolio_urls) ? r.portfolio_urls : [],
     bio: r.bio, approved: !!r.approved, verified: !!r.verified,
     machines: Array.isArray(r.machines) ? r.machines : [],
+    capabilities: Array.isArray(r.capabilities) ? r.capabilities : [],
+    traits: Array.isArray(r.traits) ? r.traits : [],
   };
 }

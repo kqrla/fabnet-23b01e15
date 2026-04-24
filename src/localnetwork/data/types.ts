@@ -34,6 +34,8 @@ export interface MakerProfile {
   approved: boolean;
   verified: boolean;
   machines: MakerMachine[];
+  capabilities: string[];
+  traits: string[];
 }
 
 export interface FabRequest {
