@@ -13,6 +13,8 @@ import LocalNetworkAuth from "@/localnetwork/AuthPage";
 import LocalNetworkJoin from "@/localnetwork/JoinPage";
 import LocalNetworkRequest from "@/localnetwork/RequestPage";
 import LocalNetworkDashboard from "@/localnetwork/DashboardPage";
+import LocalNetworkRequester from "@/localnetwork/RequesterDashboardPage";
+import LocalNetworkPublicMaker from "@/localnetwork/PublicMakerPage";
 
 export { toUrlSlug } from "@/components/MapApp";
 
@@ -34,6 +36,8 @@ const App = () => (
           <Route path="/localnetwork/join" element={<LocalNetworkJoin />} />
           <Route path="/localnetwork/request" element={<LocalNetworkRequest />} />
           <Route path="/localnetwork/dashboard" element={<LocalNetworkDashboard />} />
+          <Route path="/localnetwork/requester" element={<LocalNetworkRequester />} />
+          <Route path="/m/:alias" element={<LocalNetworkPublicMaker />} />
           <Route path="*" element={<MapApp />} />
         </Routes>
       </BrowserRouter>

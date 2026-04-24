@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/localnetwork/hooks/useSession';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
-import { ArrowLeft, Pencil, LogOut, Shield, Clock } from 'lucide-react';
+import { ArrowLeft, Pencil, LogOut, Shield, Clock, ExternalLink } from 'lucide-react';
 import type { MakerProfile, FabRequest } from '@/localnetwork/data/types';
 import { AVAILABILITY } from '@/localnetwork/data/constants';
+import { DEMO_MAKER, DEMO_INCOMING, DEMO_OPEN } from '@/localnetwork/data/demo';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const demo = params.get('demo') === '1';
   const { session, loading } = useSession();
   const [profile, setProfile] = useState<MakerProfile | null>(null);
   const [open, setOpen] = useState<FabRequest[]>([]);
@@ -18,12 +21,19 @@ export default function DashboardPage() {
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
+    if (demo) {
+      setProfile(DEMO_MAKER);
+      setMatched(DEMO_INCOMING);
+      setOpen(DEMO_OPEN);
+      return;
+    }
     if (!session) return;
     supabase.from('maker_profiles').select('*').eq('user_id', session.user.id).maybeSingle()
       .then(({ data }) => setProfile(data as any));
-  }, [session]);
+  }, [session, demo]);
 
   useEffect(() => {
+    if (demo) return;
     if (!profile) return;
     supabase.from('fab_requests').select('*').eq('city', profile.city).eq('status', 'open')
       .order('created_at', { ascending: false })
@@ -31,10 +41,11 @@ export default function DashboardPage() {
     supabase.from('fab_requests').select('*').eq('matched_maker_id', profile.id)
       .order('created_at', { ascending: false })
       .then(({ data }) => setMatched((data ?? []) as any));
-  }, [profile]);
+  }, [profile, demo]);
 
   async function setAvailability(a: string) {
     if (!profile) return;
+    if (demo) { setProfile({ ...profile, availability: a as any }); toast.success(`status: ${a} (demo)`); return; }
     setUpdating(true);
     const { error } = await supabase.from('maker_profiles').update({ availability: a }).eq('id', profile.id);
     setUpdating(false);
@@ -43,16 +54,20 @@ export default function DashboardPage() {
   }
 
   async function signOut() {
+    if (demo) { navigate('/localnetwork'); return; }
     await supabase.auth.signOut();
     navigate('/localnetwork');
   }
 
-  if (loading) return null;
-  if (!session) {
+  if (!demo && loading) return null;
+  if (!demo && !session) {
     return (
       <Center>
         <p className="text-sm text-muted-foreground lowercase mb-3">sign in to view your dashboard.</p>
-        <Link to="/localnetwork/auth"><Button>sign in</Button></Link>
+        <div className="flex gap-2">
+          <Link to="/localnetwork/auth"><Button>sign in</Button></Link>
+          <Link to="/localnetwork/dashboard?demo=1"><Button variant="outline">try demo</Button></Link>
+        </div>
       </Center>
     );
   }
@@ -73,9 +88,15 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       <Toaster />
-      <Header onSignOut={signOut} />
+      <Header onSignOut={signOut} demo={demo} />
 
       <div className="max-w-4xl mx-auto px-6 py-8 pb-20">
+        {demo && (
+          <div className="mb-5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-[11px] text-amber-800 dark:text-amber-300 lowercase flex items-center justify-between">
+            <span>demo mode — nothing you do here is saved.</span>
+            <Link to="/localnetwork/auth" className="font-bold underline">sign up for real</Link>
+          </div>
+        )}
         {/* Profile summary */}
         <div className="rounded-2xl border border-border/60 bg-card p-5">
           <div className="flex items-start justify-between gap-3 mb-4">
@@ -95,6 +116,16 @@ export default function DashboardPage() {
               </Button>
             </Link>
           </div>
+          {profile.approved ? (
+            <a href={`/m/${profile.alias}`} target="_blank" rel="noreferrer"
+              className="inline-flex items-center gap-1 mb-3 text-[10px] font-mono text-muted-foreground hover:text-foreground transition-colors lowercase">
+              public page: /m/@{profile.alias} <ExternalLink size={10} />
+            </a>
+          ) : (
+            <p className="mb-3 text-[10px] text-amber-700 dark:text-amber-400 lowercase">
+              your /m/@{profile.alias} page activates once we approve your profile. you can keep editing in the meantime.
+            </p>
+          )}
           <div className="border-t border-border/60 pt-4">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">availability</p>
             <div className="flex gap-1.5">
@@ -139,16 +170,16 @@ export default function DashboardPage() {
   );
 }
 
-function Header({ onSignOut }: { onSignOut: () => void }) {
+function Header({ onSignOut, demo }: { onSignOut: () => void; demo?: boolean }) {
   return (
     <header className="px-6 py-4 border-b border-border/60 flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-sm z-10">
       <Link to="/localnetwork" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft size={12} /> back to map
       </Link>
       <div className="flex items-center gap-3">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">localnetwork / dashboard</span>
+        <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">localnetwork / dashboard{demo ? ' / demo' : ''}</span>
         <button onClick={onSignOut} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-          <LogOut size={11} /> sign out
+          <LogOut size={11} /> {demo ? 'exit demo' : 'sign out'}
         </button>
       </div>
     </header>
