@@ -5,7 +5,7 @@ import NetworkMap from '@/localnetwork/components/NetworkMap';
 import MakerCard from '@/localnetwork/components/MakerCard';
 import MakerDrawer from '@/localnetwork/components/MakerDrawer';
 import MakerCardPopover from '@/localnetwork/components/MakerCardPopover';
-import { NETWORK_CITIES, PRINTER_TYPES, FAB_CAPABILITIES, toHashtag } from '@/localnetwork/data/constants';
+import { NETWORK_CITIES } from '@/localnetwork/data/constants';
 import type { MakerProfile } from '@/localnetwork/data/types';
 import { useSession } from '@/localnetwork/hooks/useSession';
 import { Toaster } from '@/components/ui/sonner';
@@ -18,7 +18,6 @@ export default function LocalNetworkHome() {
   const [cityMenuOpen, setCityMenuOpen] = useState(false);
   const [makers, setMakers] = useState<MakerProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set());
   const [activeCaps, setActiveCaps] = useState<Set<string>>(new Set());
   const [availableNow, setAvailableNow] = useState(false);
   const [sameDayOnly, setSameDayOnly] = useState(false);
@@ -50,12 +49,6 @@ export default function LocalNetworkHome() {
 
   const filtered = useMemo(() => {
     return makers.filter(m => {
-      if (activeTypes.size > 0) {
-        const allTypes = new Set<string>([m.printer_type, ...(m.machines?.map(x => x.printer_type) ?? [])]);
-        let any = false;
-        activeTypes.forEach(t => { if (allTypes.has(t)) any = true; });
-        if (!any) return false;
-      }
       if (activeCaps.size > 0) {
         const caps = m.capabilities ?? [];
         let any = false;
@@ -67,15 +60,7 @@ export default function LocalNetworkHome() {
       if (activeZip && m.zip !== activeZip) return false;
       return true;
     });
-  }, [makers, activeTypes, activeCaps, availableNow, sameDayOnly, activeZip]);
-
-  function toggleType(t: string) {
-    setActiveTypes(prev => {
-      const next = new Set(prev);
-      next.has(t) ? next.delete(t) : next.add(t);
-      return next;
-    });
-  }
+  }, [makers, activeCaps, availableNow, sameDayOnly, activeZip]);
 
   function toggleCap(c: string) {
     setActiveCaps(prev => {
@@ -215,32 +200,6 @@ export default function LocalNetworkHome() {
               </div>
               {zipError && <p className="text-[10px] text-destructive mt-1 lowercase">{zipError}</p>}
               {activeZip && !zipError && <p className="text-[10px] text-muted-foreground mt-1 lowercase">filtering to zip {activeZip}</p>}
-            </div>
-            <div className="flex flex-wrap gap-1 mb-2">
-              {PRINTER_TYPES.map(t => {
-                const on = activeTypes.has(t);
-                return (
-                  <button key={t} onClick={() => toggleType(t)}
-                    className={`text-[10px] font-mono px-2 py-0.5 rounded-full border transition-all ${
-                      on ? 'bg-foreground text-background border-foreground' : 'bg-muted text-foreground/65 border-transparent hover:border-foreground/20'
-                    }`}>
-                    #{t.toLowerCase().replace(/\s+/g, '')}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex flex-wrap gap-1 mb-2">
-              {FAB_CAPABILITIES.map(c => {
-                const on = activeCaps.has(c);
-                return (
-                  <button key={c} onClick={() => toggleCap(c)}
-                    className={`text-[10px] font-mono px-2 py-0.5 rounded-full border transition-all ${
-                      on ? 'bg-foreground text-background border-foreground' : 'bg-muted text-foreground/65 border-transparent hover:border-foreground/20'
-                    }`}>
-                    {toHashtag(c)}
-                  </button>
-                );
-              })}
             </div>
             <div className="flex flex-wrap gap-1.5">
               <Toggle on={availableNow} onClick={() => setAvailableNow(v => !v)}>available now</Toggle>
