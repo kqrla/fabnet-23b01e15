@@ -35,6 +35,30 @@ export default function MakerDrawer({ maker, open, onClose, onRequest }: Props) 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           {maker.bio && <p className="text-sm text-foreground/80 leading-relaxed lowercase">{maker.bio}</p>}
 
+          {(maker.capabilities?.length ?? 0) > 0 && (
+            <Section label="capabilities">
+              <div className="flex flex-wrap gap-1.5">
+                {maker.capabilities.map(c => (
+                  <span key={c} className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-muted text-foreground/75 lowercase">
+                    #{c.toLowerCase().replace(/[^a-z0-9]/g, '')}
+                  </span>
+                ))}
+              </div>
+            </Section>
+          )}
+
+          {(maker.traits?.length ?? 0) > 0 && (
+            <Section label="traits">
+              <div className="flex flex-wrap gap-1.5">
+                {maker.traits.map(t => (
+                  <span key={t} className="text-[11px] px-2.5 py-1 rounded-full bg-accent/40 text-accent-foreground/90 border border-accent/30 lowercase">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </Section>
+          )}
+
           {(maker.machines?.length ?? 0) > 0 ? (
             <Section label={`machines (${maker.machines.length})`}>
               <div className="space-y-2.5">
