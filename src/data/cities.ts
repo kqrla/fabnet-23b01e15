@@ -55,10 +55,40 @@ const LONDON_POSTCODES: Record<string, [number, number]> = {
   'E2':  [51.5300, -0.0610], 'E8':  [51.5430, -0.0680],
 };
 
+// munich uses 5-digit postleitzahl codes. coordinates are approximate
+// centroids per plz district, suitable for map snapping.
+const MUNICH_POSTCODES: Record<string, [number, number]> = {
+  '80331': [48.1372, 11.5755], '80333': [48.1450, 11.5710],
+  '80335': [48.1430, 11.5580], '80336': [48.1310, 11.5610],
+  '80337': [48.1260, 11.5560], '80469': [48.1290, 11.5740],
+  '80538': [48.1430, 11.5910], '80539': [48.1450, 11.5810],
+  '80796': [48.1620, 11.5680], '80797': [48.1640, 11.5560],
+  '80801': [48.1600, 11.5860], '80802': [48.1580, 11.5910],
+  '81667': [48.1290, 11.6010], '81669': [48.1240, 11.6010],
+  '81675': [48.1340, 11.6120], '81825': [48.1290, 11.6720],
+};
+
+// paris uses arrondissement-based postcodes (750xx). coordinates are
+// approximate centroids per arrondissement, suitable for map snapping.
+const PARIS_POSTCODES: Record<string, [number, number]> = {
+  '75001': [48.8625, 2.3360], '75002': [48.8680, 2.3420],
+  '75003': [48.8630, 2.3600], '75004': [48.8550, 2.3570],
+  '75005': [48.8443, 2.3500], '75006': [48.8490, 2.3330],
+  '75007': [48.8560, 2.3120], '75008': [48.8720, 2.3120],
+  '75009': [48.8770, 2.3380], '75010': [48.8760, 2.3600],
+  '75011': [48.8590, 2.3790], '75012': [48.8400, 2.3880],
+  '75013': [48.8280, 2.3620], '75014': [48.8290, 2.3260],
+  '75015': [48.8410, 2.2990], '75016': [48.8600, 2.2620],
+  '75017': [48.8870, 2.3070], '75018': [48.8920, 2.3490],
+  '75019': [48.8870, 2.3830], '75020': [48.8640, 2.3980],
+};
+
 export const CITIES: CityConfig[] = [
   { id: 'sf', name: 'San Francisco', center: [37.762, -122.435], zoom: 13, zips: SF_ZIPS },
   { id: 'la', name: 'Los Angeles', center: [34.052, -118.280], zoom: 12, zips: LA_ZIPS },
   { id: 'nyc', name: 'New York City', center: [40.712, -74.006], zoom: 12, zips: NYC_ZIPS },
   { id: 'boston', name: 'Boston', center: [42.361, -71.057], zoom: 13, zips: BOSTON_ZIPS },
   { id: 'london', name: 'London', center: [51.5074, -0.1278], zoom: 12, zips: LONDON_POSTCODES },
+  { id: 'munich', name: 'Munich', center: [48.1372, 11.5755], zoom: 12, zips: MUNICH_POSTCODES },
+  { id: 'paris', name: 'Paris', center: [48.8566, 2.3522], zoom: 12, zips: PARIS_POSTCODES },
 ];
