@@ -21,6 +21,7 @@ interface Entry {
 
 const entries: Entry[] = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
+  { path: "/landing", changefreq: "monthly", priority: "0.8" },
   ...CITIES.map(c => ({
     path: `/${slug(c.name)}`,
     changefreq: "weekly" as const,
