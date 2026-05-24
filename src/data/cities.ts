@@ -42,9 +42,23 @@ const BOSTON_ZIPS: Record<string, [number, number]> = {
   '02143': [42.3850, -71.1044], '02215': [42.3490, -71.1005],
 };
 
+// london uses postcode districts (outward codes) rather than us-style zips.
+// coordinates are approximate centroids per district, suitable for map snapping.
+const LONDON_POSTCODES: Record<string, [number, number]> = {
+  'EC1': [51.5235, -0.1050], 'EC2': [51.5175, -0.0860],
+  'EC3': [51.5130, -0.0810], 'EC4': [51.5140, -0.1030],
+  'WC1': [51.5220, -0.1240], 'WC2': [51.5130, -0.1230],
+  'W1':  [51.5150, -0.1410], 'W2':  [51.5160, -0.1880],
+  'SW1': [51.4980, -0.1340], 'SW3': [51.4920, -0.1690],
+  'SE1': [51.5030, -0.0870], 'N1':  [51.5380, -0.1030],
+  'NW1': [51.5340, -0.1430], 'E1':  [51.5170, -0.0590],
+  'E2':  [51.5300, -0.0610], 'E8':  [51.5430, -0.0680],
+};
+
 export const CITIES: CityConfig[] = [
   { id: 'sf', name: 'San Francisco', center: [37.762, -122.435], zoom: 13, zips: SF_ZIPS },
   { id: 'la', name: 'Los Angeles', center: [34.052, -118.280], zoom: 12, zips: LA_ZIPS },
   { id: 'nyc', name: 'New York City', center: [40.712, -74.006], zoom: 12, zips: NYC_ZIPS },
   { id: 'boston', name: 'Boston', center: [42.361, -71.057], zoom: 13, zips: BOSTON_ZIPS },
+  { id: 'london', name: 'London', center: [51.5074, -0.1278], zoom: 12, zips: LONDON_POSTCODES },
 ];
