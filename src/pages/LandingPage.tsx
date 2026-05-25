@@ -98,7 +98,7 @@ export default function LandingPage() {
       </section>
 
       {/* two-surface explainer */}
-      <section id="what" className="border-t border-border bg-card/40">
+      <section id="what" className="border-t border-border bg-background/60 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-8">
           <article className="bg-card border border-border rounded-lg p-8">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-muted-foreground mb-4">
@@ -178,7 +178,7 @@ export default function LandingPage() {
       </section>
 
       {/* principles */}
-      <section className="border-t border-border bg-card/40">
+      <section className="border-t border-border bg-background/60 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 py-20 grid md:grid-cols-3 gap-10">
           <div>
             <Sparkles className="h-5 w-5 text-primary mb-3" />
