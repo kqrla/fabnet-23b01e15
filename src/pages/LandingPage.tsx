@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, MapPin, Users, Package, Search, Radar, Sparkles } from "lucide-react";
 import { CITIES } from "@/data/cities";
+import MapView from "@/components/MapView";
 
 // landing page at /landing.
 //
@@ -24,7 +25,26 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans">
+    <div className="relative min-h-screen bg-background text-foreground font-sans">
+      {/* dimmed live map backdrop. fixed so it stays put as the page scrolls.
+          pointer-events disabled so it never intercepts clicks. opacity tuned
+          low enough that text remains readable on top. */}
+      <div
+        aria-hidden
+        className="fixed inset-0 z-0 pointer-events-none opacity-25"
+      >
+        <MapView
+          locations={[]}
+          initialCenter={[37.762, -122.435]}
+          initialZoom={13}
+          theme="default"
+          onMarkerClick={() => {}}
+          onMapClick={() => {}}
+        />
+        <div className="absolute inset-0 bg-background/40" />
+      </div>
+
+      <div className="relative z-10">
       {/* top bar */}
       <header className="sticky top-0 z-20 backdrop-blur bg-background/80 border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
@@ -249,6 +269,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 }
