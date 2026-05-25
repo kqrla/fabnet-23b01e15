@@ -1,8 +1,7 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, MapPin, Users, Package, Search, Radar, Sparkles } from "lucide-react";
 import { CITIES } from "@/data/cities";
-import MapView from "@/components/MapView";
+import MarketingShell from "@/pages/MarketingShell";
 
 // landing page at /landing.
 //
@@ -18,53 +17,8 @@ import MapView from "@/components/MapView";
 // - everything lowercase per project writing rules. no emojis, no em dashes.
 
 export default function LandingPage() {
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "auto";
-    return () => { document.body.style.overflow = prev; };
-  }, []);
-
   return (
-    <div className="relative min-h-screen bg-background text-foreground font-sans">
-      {/* dimmed live map backdrop. fixed so it stays put as the page scrolls.
-          pointer-events disabled so it never intercepts clicks. opacity tuned
-          low enough that text remains readable on top. */}
-      <div
-        aria-hidden
-        className="fixed inset-0 z-0 pointer-events-none opacity-[0.49]"
-      >
-        <MapView
-          locations={[]}
-          initialCenter={[37.762, -122.435]}
-          initialZoom={13}
-          theme="default"
-          onMarkerClick={() => {}}
-          onMapClick={() => {}}
-        />
-        <div className="absolute inset-0 bg-background/40" />
-      </div>
-
-      <div className="relative z-10">
-      {/* top bar */}
-      <header className="sticky top-0 z-20 backdrop-blur bg-background/80 border-b border-border">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link to="/landing" className="font-mono text-sm font-semibold tracking-tight">
-            fabnet
-          </Link>
-          <nav className="flex items-center gap-5 text-sm text-muted-foreground">
-            <a href="#what" className="hover:text-foreground transition-colors">what it is</a>
-            <a href="#how" className="hover:text-foreground transition-colors">how it works</a>
-            <a href="#cities" className="hover:text-foreground transition-colors">cities</a>
-            <Link
-              to="/"
-              className="text-foreground font-medium inline-flex items-center gap-1"
-            >
-              open map <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </nav>
-        </div>
-      </header>
-
+    <MarketingShell active="landing">
       {/* hero */}
       <section className="max-w-6xl mx-auto px-6 pt-24 pb-20">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-5">
@@ -258,18 +212,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      <footer className="border-t border-border">
-        <div className="max-w-6xl mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-4 text-xs text-muted-foreground">
-          <span className="font-mono">fabnet · a quiet atlas</span>
-          <div className="flex items-center gap-5">
-            <Link to="/" className="hover:text-foreground">map</Link>
-            <Link to="/localnetwork" className="hover:text-foreground">local network</Link>
-            <Link to="/localnetwork/join" className="hover:text-foreground">join</Link>
-          </div>
-        </div>
-      </footer>
-      </div>
-    </div>
+    </MarketingShell>
   );
 }
