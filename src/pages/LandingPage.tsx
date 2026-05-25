@@ -31,7 +31,7 @@ export default function LandingPage() {
           low enough that text remains readable on top. */}
       <div
         aria-hidden
-        className="fixed inset-0 z-0 pointer-events-none opacity-25"
+        className="fixed inset-0 z-0 pointer-events-none opacity-[0.37]"
       >
         <MapView
           locations={[]}
