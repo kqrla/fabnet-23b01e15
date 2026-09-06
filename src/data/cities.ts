@@ -83,6 +83,28 @@ const PARIS_POSTCODES: Record<string, [number, number]> = {
   '75019': [48.8870, 2.3830], '75020': [48.8640, 2.3980],
 };
 
+// tel aviv uses israeli postal codes; we key on the older 5-digit district
+// style since that is what people still type by hand.
+const TEL_AVIV_POSTCODES: Record<string, [number, number]> = {
+  '61000': [32.0700, 34.7800], '62000': [32.0900, 34.7860],
+  '63000': [32.0760, 34.7720], '64000': [32.0730, 34.7810],
+  '65000': [32.0620, 34.7720], '66000': [32.0570, 34.7690],
+  '67000': [32.0730, 34.7920], '68000': [32.0510, 34.7530],
+  '69000': [32.1120, 34.7990], '69700': [32.1180, 34.8060],
+};
+
+// copenhagen uses 4-digit danish postnumre. coordinates are approximate
+// centroids per district, suitable for map snapping.
+const COPENHAGEN_POSTCODES: Record<string, [number, number]> = {
+  '1050': [55.6800, 12.5900], '1300': [55.6830, 12.5820],
+  '1400': [55.6720, 12.5940], '1500': [55.6700, 12.5600],
+  '1600': [55.6720, 12.5580], '1700': [55.6690, 12.5470],
+  '2100': [55.7050, 12.5750], '2200': [55.6960, 12.5480],
+  '2300': [55.6580, 12.6100], '2400': [55.7040, 12.5300],
+  '2450': [55.6650, 12.5350], '2500': [55.6650, 12.5020],
+  '2800': [55.7700, 12.5030], '2900': [55.7300, 12.5750],
+};
+
 export const CITIES: CityConfig[] = [
   { id: 'sf', name: 'San Francisco', center: [37.762, -122.435], zoom: 13, zips: SF_ZIPS },
   { id: 'la', name: 'Los Angeles', center: [34.052, -118.280], zoom: 12, zips: LA_ZIPS },
