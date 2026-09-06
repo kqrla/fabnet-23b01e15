@@ -113,4 +113,6 @@ export const CITIES: CityConfig[] = [
   { id: 'london', name: 'London', center: [51.5074, -0.1278], zoom: 12, zips: LONDON_POSTCODES },
   { id: 'munich', name: 'Munich', center: [48.1372, 11.5755], zoom: 12, zips: MUNICH_POSTCODES },
   { id: 'paris', name: 'Paris', center: [48.8566, 2.3522], zoom: 12, zips: PARIS_POSTCODES },
+  { id: 'telaviv', name: 'Tel Aviv', center: [32.0853, 34.7818], zoom: 12, zips: TEL_AVIV_POSTCODES },
+  { id: 'copenhagen', name: 'Copenhagen', center: [55.6761, 12.5683], zoom: 12, zips: COPENHAGEN_POSTCODES },
 ];
