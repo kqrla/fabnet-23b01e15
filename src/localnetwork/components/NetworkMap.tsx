@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MakerProfile } from '@/localnetwork/data/types';
 
-const TILE_VOYAGER = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png';
+const TILE_VOYAGER = 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_3zn8_1_c9a48537536b80672dce846f';
 
 const PIN_COLORS: Record<string, string> = {
   'FDM':           '#A888C4',
@@ -79,7 +79,10 @@ export default function NetworkMap({ makers, center, zoom, highlightedId, onMark
       if (mapRef.current || !containerRef.current) return;
       const L = (window as any).L;
       const map = L.map(containerRef.current, { center, zoom, zoomControl: false });
-      L.tileLayer(TILE_VOYAGER, { maxZoom: 19, attribution: '© OpenStreetMap © CARTO' }).addTo(map);
+      L.tileLayer(TILE_VOYAGER, {
+        maxZoom: 19,
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">openstreetmap</a> © <a href="https://carto.com/">carto</a>',
+      }).addTo(map);
       map.on('click', () => handlersRef.current.onMapClick());
       mapRef.current = map;
       handlersRef.current.onReady?.(map);
