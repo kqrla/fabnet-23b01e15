@@ -25,6 +25,11 @@ const CITY_ALIASES: Record<string, string> = {
   'newyork':       'new-york-city',
   'newyorkcity':   'new-york-city',
   'boston':        'boston',
+  'london':        'london',
+  'munich':        'munich',
+  'paris':         'paris',
+  'telaviv':       'tel-aviv',
+  'copenhagen':    'copenhagen',
 };
 
 function parseCityFromUrl(allCities: CityConfig[]): CityConfig | null {
