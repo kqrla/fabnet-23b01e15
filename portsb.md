@@ -17,8 +17,7 @@ the map client reads `locations` and writes `submissions` through `src/lib/api.t
 2. apply every sql file in `supabase/migrations` in filename order.
 3. confirm every public table has explicit grants, row-level security, and matching policies.
 4. copy the required rows using csv or a postgres transfer.
-5. set the new public url, publishable key, and project id in the deployment environment.
-6. point the public directory client at the new project.
+5. set the new public url, publishable key, and project id in the deployment environment. the shared client moves the public directory and local network together.
 7. test anonymous map reads, anonymous submissions, account sign-in, profile editing, approval visibility, and request visibility.
 
 ## required schema
@@ -82,5 +81,5 @@ the current application has no required server function. maker approval email is
 
 - campus resources are reviewed records in the application bundle and must be copied with the source repository.
 - map tiles are provided by carto and are not part of the backend migration.
-- public location data currently uses a separate client, so both clients must be repointed or consolidated during migration.
+- public location data and authenticated local network data use one environment-backed client, so changing the deployment environment moves both together.
 - row-level policies and table grants are both required. either one alone is insufficient.

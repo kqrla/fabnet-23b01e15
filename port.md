@@ -22,7 +22,7 @@ vite_supabase_publishable_key=your-publishable-key
 vite_supabase_project_id=your-project-id
 ```
 
-the current public resource directory also uses the endpoint configured in `src/lib/supabaseexternal.ts`. replace that endpoint and publishable key when moving the directory to another project. publishable keys may be used in browser code only when row-level access policies are enabled.
+the public resource directory, local network, and authentication all use the same environment-backed client. publishable keys may be used in browser code only when row-level access policies are enabled.
 
 ## development
 

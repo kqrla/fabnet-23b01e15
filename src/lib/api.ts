@@ -1,9 +1,9 @@
 /**
- * api.ts — Supabase-backed API client.
- * Replaces the original Zite SDK calls with direct Supabase queries.
+ * api.ts — database-backed public directory client.
+ * keeping these queries behind one module lets map screens remain backend-portable.
  */
 
-import { supabase } from '@/lib/supabaseExternal';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Location {
   id: string;
