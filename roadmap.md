@@ -2,8 +2,6 @@
 
 ## short term
 
-- finish the authoritative resource audit for every supported city.
-- verify and publish additional public fabrication locations in the external directory.
 - send an administrator email when a maker requests approval.
 - remove broad public read and update access from moderation submissions.
 
