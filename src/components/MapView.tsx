@@ -14,7 +14,7 @@ interface Props {
 
 // All themes use Voyager (warm beige land, green parks, blue water).
 // Color tinting is done entirely via CSS filters in index.css.
-const TILE_VOYAGER = 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_3zn8_1_c9a48537536b80672dce846f';
+const TILE_VOYAGER = 'https://basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png?key=cb1_3zn8_1_c9a48537536b80672dce846f';
 
 // Pin colours per theme — no teal anywhere
 const THEME_PINS: Record<string, Record<string, string>> = {
