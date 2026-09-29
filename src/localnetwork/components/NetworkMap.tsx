@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MakerProfile } from '@/localnetwork/data/types';
 
-const TILE_VOYAGER = 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_3zn8_1_c9a48537536b80672dce846f';
+const TILE_VOYAGER = 'https://basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png?key=cb1_3zn8_1_c9a48537536b80672dce846f';
 
 const PIN_COLORS: Record<string, string> = {
   'FDM':           '#A888C4',
